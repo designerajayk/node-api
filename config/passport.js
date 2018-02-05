@@ -1,6 +1,6 @@
 // load all the things needed
 var LocalStrategy   = require('passport-local').Strategy;
-
+const nodemailer = require("nodemailer");
 // load up the user model
 var mysql = require('mysql');
 var bcrypt = require('bcrypt');
@@ -55,8 +55,40 @@ module.exports = function(passport) {
 
                     connection.query(insertQuery,[newUserMysql.username, newUserMysql.password, newUserMysql.name],function(err, rows) {
                         newUserMysql.id = rows.insertId;
+                        //mail setup 
+                        // create reusable transport method (opens pool of SMTP connections)
+                        var smtpTransport = nodemailer.createTransport({
+                            service: "Gmail",
+                            auth: {
+                            user: "",
+                            pass: ""
+                            },
+                            tls: {
+                            rejectUnauthorized: false
+                            }
+                        });
 
-                        return done(null, newUserMysql);
+                        // setup e-mail data with unicode symbols
+                        var mailOptions = {
+                            from: "Fred Foo ✔ <noreply@avbiosci.com>", // sender address
+                            to: "", // list of receivers
+                            subject: "Hello ✔", // Subject line
+                            text: JSON.stringify(req.body) // html body
+                        }
+
+                        // send mail with defined transport object
+                        smtpTransport.sendMail(mailOptions, function (error, response) {
+                            if (error) {
+                                smtpTransport.close();
+                                return done(null, false, req.flash('signupMessage', 'Mail not send'));
+                            } else {
+                                smtpTransport.close();
+                                return done(null, newUserMysql);
+                            }
+                        });
+
+
+                        
                     });
                 }
             });

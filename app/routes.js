@@ -1,30 +1,40 @@
-module.exports = function(app, passport, SERVER_SECRET) {
+module.exports = function (app, passport, SERVER_SECRET) {
 
   // default message
   app.get('/', function (req, res) {
     res.send('<html><body><p>Welcome to the database</p></body></html>');
   });
 
-// =========== authenticate login info and generate access token ===============
+  // =========== authenticate login info and generate access token ===============
 
-  app.post('/login', function(req, res, next) {
-  passport.authenticate('local-login', function(err, user, info) {
-      if (err) { return next(err); }
+  app.post('/login', function (req, res, next) {
+    passport.authenticate('local-login', function (err, user, info) {
+      if (err) {
+        return next(err);
+      }
       // stop if it fails
-      if (!user) { return res.json({ message: 'Invalid Username of Password' }); }
+      if (!user) {
+        return res.json({
+          message: 'Invalid Username of Password'
+        });
+      }
 
-      req.logIn(user, function(err) {
+      req.logIn(user, function (err) {
         // return if does not match
-        if (err) { return next(err); }
+        if (err) {
+          return next(err);
+        }
 
         // generate token if it succeeds
         const db = {
-          updateOrCreate: function(user, cb){
+          updateOrCreate: function (user, cb) {
             cb(null, user);
           }
         };
-        db.updateOrCreate(req.user, function(err, user){
-          if(err) {return next(err);}
+        db.updateOrCreate(req.user, function (err, user) {
+          if (err) {
+            return next(err);
+          }
           // store the updated information in req.user again
           req.user = {
             id: user.username
@@ -46,37 +56,47 @@ module.exports = function(app, passport, SERVER_SECRET) {
     })(req, res, next);
   });
 
-// =============================================================================
+  // =============================================================================
 
-// ==================== Allows users to create accounts ========================
+  // ==================== Allows users to create accounts ========================
 
   app.post('/signup', passport.authenticate('local-signup', {
-    successRedirect : '/signup/successjson',
-    failureRedirect : '/signup/failurejson',
-    failureFlash : true
-    }));
+    successRedirect: '/signup/successjson',
+    failureRedirect: '/signup/failurejson',
+    failureFlash: true
+  }));
   // return messages for signup users
-  app.get('/signup/successjson', function(req, res) {
-    res.json({ message: 'Successfully created user' });
+  app.get('/signup/successjson', function (req, res) {
+    res.json({
+      message: 'User created'
+    });
+
   });
 
-  app.get('/signup/failurejson', function(req, res) {
-    res.json({ message: 'This user already exists' });
+  app.get('/signup/failurejson', function (req, res) {
+
+    var message = req.flash('signupMessage')[0];
+
+    res.json({
+      message
+    });
   });
 
-// =============================================================================
+  // =============================================================================
 
-// ================= Protected APIs for authenticated Users ====================
+  // ================= Protected APIs for authenticated Users ====================
 
   // get tools and routes
   var expressJwt = require('express-jwt'),
-      REST_POST = require('../routes/REST_POST'),
-      REST_GET = require('../routes/REST_GET'),
-      REST_EDIT = require('../routes/REST_EDIT'),
-      REST_DELETE = require('../routes/REST_DELETE');
+    REST_POST = require('../routes/REST_POST'),
+    REST_GET = require('../routes/REST_GET'),
+    REST_EDIT = require('../routes/REST_EDIT'),
+    REST_DELETE = require('../routes/REST_DELETE');
 
   // authenticate access token
-  const authenticate = expressJwt({secret : SERVER_SECRET});
+  const authenticate = expressJwt({
+    secret: SERVER_SECRET
+  });
 
   // GET, EndPoint:
   // https://127.0.0.1:5000/product/api/all?order={orderby}
@@ -105,6 +125,6 @@ module.exports = function(app, passport, SERVER_SECRET) {
   // Endpoint: https://127.0.0.1:5000/product/api/delete/?id={orderID}
   app.delete('/product/api/delete/', authenticate, REST_DELETE);
 
-// =============================================================================
+  // =============================================================================
 
 }
