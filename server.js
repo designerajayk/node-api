@@ -11,6 +11,7 @@ var passport = require('passport');
 var flash    = require('connect-flash');
 var fs = require('fs');
 var https = require('https');
+var cors = require('cors')
 
 // config passport and connect to DB
 require('./config/passport')(passport);
@@ -23,6 +24,8 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
+app.use(cors())
+
 
 // config passport
 app.use(session({

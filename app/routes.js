@@ -75,8 +75,8 @@ module.exports = function (app, passport, SERVER_SECRET) {
 
   app.get('/signup/failurejson', function (req, res) {
 
-    var message = req.flash('signupMessage')[0];
-
+    var message = req.flash('signupMessage')[0]?req.flash('signupMessage')[0]: "That username is already taken.";
+    console.log(message)
     res.json({
       message
     });
